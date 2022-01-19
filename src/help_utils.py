@@ -6,7 +6,7 @@ import time
 import math
 from logging import getLogger, INFO, FileHandler,  Formatter, StreamHandler
 from contextlib import contextmanager
-from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import StratifiedKFold,GroupKFold
 
 
 @contextmanager
@@ -70,11 +70,12 @@ def seed_torch(seed=42):
     
 def split_kfold(train,drop_c = None,n_splits=5,seed=42,groups='id',verbose=True,CFG=None):
     folds = train.copy()
+    folds = folds[folds.stimuli=='S2 match']
     for d in drop_c:
         folds = folds[folds.stimuli != d]
     folds = folds.reset_index(drop=True)
-    Fold = StratifiedKFold(n_splits=CFG.n_fold, shuffle=True, random_state=CFG.seed)
-    for n, (train_index, val_index) in enumerate(Fold.split(folds, folds[CFG.target_col],groups=folds['id'])):
+    Fold = GroupKFold(n_splits=CFG.n_fold)#StratifiedKFold(n_splits=CFG.n_fold)
+    for n, (train_index, val_index) in enumerate(Fold.split(folds, folds[CFG.target_col],folds['id'])):
         folds.loc[val_index, 'fold'] = int(n)
     folds['fold'] = folds['fold'].astype(int)
     folds = folds.drop('Unnamed: 0',1)
