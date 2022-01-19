@@ -1,15 +1,15 @@
 import yaml
 
 class data_config:
-    sax_csv_path = "/sise/liorrk-group/OrDanOfir/eeg/data/dataset_SAX.parquet"
+    sax_csv_path = "/sise/liorrk-group/OrDanOfir/eeg/data/dataset_change_point.parquet"
     img_csv_path = "/sise/liorrk-group/OrDanOfir/eeg/data/img_train.csv"
     OUTPUT_DIR = './output'
     num_workers=8
     batch_size=16
     pin_memory=True
     drop_last=True
-    stimuli = ['S1 obj','S2 nomatch','S2 match']
-    drop_stimuli = ['S2 nomatch err','S2 match err']
+    stimuli = ['S2 match']
+    drop_stimuli = ['S2 nomatch err','S2 match err','S1 obj','S2 nomatch']
     cnn_data_pp = None
     lstm_data_pp = None
     tabular_data_pp = None
@@ -31,6 +31,7 @@ class image_model_config:
     drop_rate = 0.3
     flatten=True
     pp_fun = None
+    type_image = 'ica'
 
 class lstm_config:
     LSTM_UNITS = 512
@@ -44,6 +45,7 @@ class lstm_config:
        'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'PO1', 'PO2', 'PO7', 'PO8',
        'POZ', 'PZ', 'T7', 'T8', 'TP7', 'TP8', 'X', 'Y', 'nd']
     pp_fun = None
+    use_sax = True
 
 class tabular_config:
     n_meta_dim=[512, 128]
@@ -67,10 +69,10 @@ class Config:
     num_classes=2
     k_fold_fun = 'help_utils.split_kfold'
     model_fn = 'models.get_model'
-    model_args = dict(backbone_name = 'tf_efficientnet_b5_ns')
+    model_args = dict(backbone_name = 'tf_efficientnet_b0_ns')
     debug=False
     verbose = True
-    print_freq=250
+    print_freq=100
     epochs=15
     seed=42
     target_size=1
@@ -81,13 +83,13 @@ class Config:
     inference=False
     score_metric = 'sklearn.metrics.accuracy_score'
     train_lstm = True
-    train_cnn = True
-    train_tabular = True
-    LSTM = lstm_config()
-    CNN = image_model_config()
-    TABULAR = tabular_config()
-    TORCH = torch_config()
-    DATA = data_config()
+    train_cnn = False
+    train_tabular = False
+    LSTM = lstm_config
+    CNN = image_model_config
+    TABULAR = tabular_config
+    TORCH = torch_config
+    DATA = data_config
 
 def load_config(config_file):
     with open(config_file, 'r') as fp:
