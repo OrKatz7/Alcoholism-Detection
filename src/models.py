@@ -46,8 +46,9 @@ class GeMP(nn.Module):
         return x
     
 class LSTM(nn.Module):
-    def __init__(self, LSTM_UNITS = 512 , bidirectional=True , batch_first = True,dropout=0.0,out_dim = 2):
+    def __init__(self, LSTM_UNITS = 512 , bidirectional=True , batch_first = True,dropout=0.35,out_dim = 2):
         super().__init__()
+        self.bn = m = nn.BatchNorm1d(16)
         self.lstm1 = nn.LSTM(64, LSTM_UNITS, bidirectional=bidirectional, batch_first=batch_first,dropout=dropout)
         self.lstm2 = nn.LSTM(LSTM_UNITS * 2, LSTM_UNITS, bidirectional=bidirectional, batch_first=batch_first,dropout=dropout)
         self.linear1 = nn.Linear(LSTM_UNITS*2, LSTM_UNITS*2)
@@ -63,12 +64,13 @@ class LSTM(nn.Module):
             embedding = x_lstm[:,0,:,:]
         else:
             embedding = x_lstm
+        embedding = self.bn(embedding)
         self.lstm1.flatten_parameters()
         h_lstm1, _ = self.lstm1(embedding)
         self.lstm2.flatten_parameters()
         h_lstm2, _ = self.lstm2(h_lstm1)
-        h_conc_linear1  = self.s1d(self.linear1(h_lstm1))
-        h_conc_linear2  = self.s2d(self.linear2(h_lstm2))
+        h_conc_linear1  = self.linear1(h_lstm1)
+        h_conc_linear2  = self.linear2(h_lstm2)
         hidden = h_lstm1 + h_lstm2 + h_conc_linear1 + h_conc_linear2
         if self.drop_rate:
             hidden = F.dropout(hidden, p=float(self.drop_rate)*2, training=self.training)
@@ -157,10 +159,10 @@ class BlockAttentionModel(nn.Module):
         if self.train_cnn:
             x = self.backbone(x)
             x = self.attention(x)
-            if gradcam:
-                return x
             x = self.global_pool(x)
             x = x.view(x.size(0), -1)
+            if gradcam:
+                return x
             y_cnn = self.head_cnn(x)
             f.append(x)
             results.append(y_cnn)
